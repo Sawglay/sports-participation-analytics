@@ -340,3 +340,19 @@ st.markdown(f"""
   </p>
 </div>
 """, unsafe_allow_html=True)
+
+# st.title("Optimizing University Sport Investment Using Popularity And Stress Analysis")
+st.info('Upload Your Cleaned Data')
+uploaded_file = st.file_uploader('Upload Cleaned_Data.xlsx', type=['xlsx'])
+
+if uploaded_file is None:
+    st.write('Please upload your Cleaned_Data.xlsx file to continue.')
+    st.stop()
+
+df = pd.read_excel(uploaded_file, sheet_name='Sheet1')
+df = df.drop(columns=[c for c in df.columns if 'unnamed' in c.lower()])
+df = df.rename(columns={'AcitvityLevel': 'ActivityLevel'})
+
+# Removing 'Prefer Not To Say' from dataset
+df = df[df['Gender'] != 'Prefer Not To Say']
+df = df.reset_index(drop=True)
