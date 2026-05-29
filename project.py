@@ -407,3 +407,56 @@ st.write('Which sports do the most students participate in?')
 sport_counts = df['Sport'].value_counts().reset_index()
 sport_counts.columns = ['Sport', 'Count']
 sport_counts['Percentage'] = round(sport_counts['Count'] / len(df) * 100, 1)
+
+
+
+fig_bar_sport = px.bar(sport_counts, x='Sport', y='Count',
+                       color='Sport',
+                       text='Percentage',
+                       title='Sport Popularity - Number of Students per Sport')
+fig_bar_sport.update_traces(texttemplate='%{text}%', textposition='outside')
+st.plotly_chart(fig_bar_sport)
+
+st.write('Key Finding: Badminton is the most popular sport with 59 students (43%).')
+st.write('Basketball is second with 36 students (26%).')
+st.write('Badminton + Basketball together cover 69% of all sport participants.')
+st.write('Majority of participation is concentrated in just 2 sports.')
+st.info('Interpretation: Sport participation is highly concentrated in two sports. Badminton alone accounts for 43% of students, making it the dominant activity on campus. Basketball follows at 26%. Every other sport individually accounts for less than 15% of students. This concentration pattern is critical for investment decisions — any resources directed at minority sports would benefit fewer than 1 in 7 students, making them poor value compared to investing in Badminton and Basketball infrastructure.')
+
+
+st.header('Workload vs Stress Analysis')
+st.write('RQ1: Does academic workload significantly increase student stress?')
+
+
+#bar chart - average stress by workload
+wl_stress = df.groupby('AcademicWorkload')['Stress_num'].mean().reindex(
+    ['Low', 'Medium', 'High']).reset_index()
+wl_stress.columns = ['AcademicWorkload', 'Average Stress']
+fig_bar_wl = px.bar(wl_stress, x='AcademicWorkload', y='Average Stress',
+                    color='AcademicWorkload',
+                    title='Average Stress Level by Academic Workload')
+st.plotly_chart(fig_bar_wl)
+st.info('Interpretation: The bar chart shows a clear upward staircase pattern — average stress rises consistently from Low (3.0) to Medium (3.14) to High (4.08) workload groups. This visual trend strongly suggests a positive relationship between workload and stress. The jump from Medium to High is notably larger than from Low to Medium, indicating that high workload has a disproportionately strong effect on stress compared to moderate workload.')
+
+#ANOVA statistical test
+group_Low    = df[df['AcademicWorkload'] == 'Low']['Stress_num']
+group_Medium = df[df['AcademicWorkload'] == 'Medium']['Stress_num']
+group_High   = df[df['AcademicWorkload'] == 'High']['Stress_num']
+f_stat, p_value_anova = stats.f_oneway(group_Low, group_Medium, group_High)
+
+st.subheader('One-Way ANOVA - Workload vs Stress')
+st.write('Low Workload    Mean Stress:', round(group_Low.mean(), 2))
+st.write('Medium Workload Mean Stress:', round(group_Medium.mean(), 2))
+st.write('High Workload   Mean Stress:', round(group_High.mean(), 2))
+st.write('F-statistic:', round(f_stat, 4))
+st.write('p-value    :', round(p_value_anova, 6))
+if p_value_anova < 0.05:
+    st.write('Result: SIGNIFICANT (p < 0.05)')
+    st.write('Conclusion: Academic workload significantly increases student stress.')
+    st.write('High workload students are 37% more stressed than low workload students.')
+    st.write('This is the main stress driver confirmed by statistical testing.')
+st.info('ANOVA Interpretation: The one-way ANOVA tests whether mean stress differs significantly across the three workload groups. The F-statistic of 10.33 and p-value of 0.00007 confirm the differences are statistically significant — far below the 0.05 threshold. This means workload group differences in stress did not occur by chance. With High workload students averaging 4.08 stress vs 3.0 for Low workload students, academic pressure is the strongest and most statistically reliable predictor of stress in this entire dataset.')
+
+
+st.header('Sport vs Stress Analysis')
+st.write('RQ2: Does sport participation reduce student stress?')
