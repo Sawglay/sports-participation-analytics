@@ -356,3 +356,54 @@ df = df.rename(columns={'AcitvityLevel': 'ActivityLevel'})
 # Removing 'Prefer Not To Say' from dataset
 df = df[df['Gender'] != 'Prefer Not To Say']
 df = df.reset_index(drop=True)
+
+st.dataframe(df)
+st.info('The dataset covers key lifestyle and academic variables that may influence student stress. "Prefer Not To Say" gender responses have been removed so that the gender analysis compares only Male and Female groups. All 128 remaining responses are used in the full analysis.')
+
+st.header('Descriptive Statistics')
+
+df_selected = df[['Stress_num', 'SportsHrs_num', 'Sleep_num', 'Height_num']]
+
+#calculate and display stats for each column using a loop
+for column in df_selected.columns:
+    st.subheader(column + ' Statistics')
+    data = df_selected[column]
+    st.write('Count:', len(data))
+    st.write('Mean:', round(np.mean(data), 2))
+    st.write('Median:', round(np.median(data), 2))
+    st.write('Mode:', statistics.mode(data))
+    st.write('Standard Deviation:', round(np.std(data), 2))
+    st.write('Min:', min(data))
+    st.write('Max:', max(data))
+
+#IQR and fence values for Stress
+Q1 = np.percentile(df['Stress_num'], 25)
+Q3 = np.percentile(df['Stress_num'], 75)
+IQR = Q3 - Q1
+
+st.subheader('Stress Level - IQR and Fence Values')
+st.write('Q1:', Q1)
+st.write('Q3:', Q3)
+st.write('IQR:', IQR)
+st.write('Lower Fence:', Q1 - 1.5 * IQR)
+st.write('Upper Fence:', Q3 + 1.5 * IQR)
+st.info('The IQR of 1.0 shows the middle 50% of stress scores falls between 3 and 4, indicating that most students experience moderate-to-high stress. The upper fence is 5.5, which exceeds the maximum possible score of 5 — meaning no students qualify as high-stress outliers; all high scores are genuine. The lower fence is 1.5, so only students scoring below 1.5 would be outliers on the low end. This confirms the stress distribution is real and not distorted by anomalies.')
+
+st.subheader('Summary Table')
+st.dataframe(df_selected.describe())
+st.info('Summary: Stress scores average around 3.4 out of 5, indicating moderate-to-high stress across the sample. The median of 3 and mode of 3 confirm that the most common experience is mid-range stress. Sport hours average just 2.73 hours per week with a low median of 1.5, suggesting most students participate minimally. Sleep averages 6 hours per night, below the recommended 8 hours, indicating mild sleep deprivation is common across the sample.')
+
+
+df['HighStress'] = (df['Stress_num'] >= 4).astype(int)
+
+df['Workload_num'] = df['AcademicWorkload'].map({'Low': 1, 'Medium': 2, 'High': 3})
+df['Activity_num'] = df['ActivityLevel'].map({'Very Low': 1, 'Low': 2, 'Moderate': 3, 'High': 4})
+df['Gender_bin'] = (df['Gender'] == 'Female').astype(int)
+
+st.header('Sport Popularity Analysis')
+st.write('Which sports do the most students participate in?')
+
+#bar chart - sport popularity
+sport_counts = df['Sport'].value_counts().reset_index()
+sport_counts.columns = ['Sport', 'Count']
+sport_counts['Percentage'] = round(sport_counts['Count'] / len(df) * 100, 1)
