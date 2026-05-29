@@ -460,3 +460,54 @@ st.info('ANOVA Interpretation: The one-way ANOVA tests whether mean stress diffe
 
 st.header('Sport vs Stress Analysis')
 st.write('RQ2: Does sport participation reduce student stress?')
+#sport hours vs wellness chart
+df['Sleep_Sport_Interaction'] = df['Sleep_num'] * df['SportsHrs_num']
+df['Workload_Sleep'] = df['Workload_num'] * df['Sleep_num']
+df['Workload_Activity'] = df['Workload_num'] * df['Activity_num']
+
+st.subheader('Sport Hours vs Wellness (Stress and Sleep)')
+fig_wellness = px.scatter(
+    df,
+    x='SportsHrs_num',
+    y='Stress_num',
+    color='AcademicWorkload',
+    labels={
+        'SportsHrs_num': 'Sport Hours per Week',
+        'Stress_num': 'Stress Level'
+    },
+    title='Sport Hours vs Stress Level'
+)
+st.plotly_chart(fig_wellness)
+st.info('Interpretation: The scatter plot shows stress levels across different sport hours, coloured by academic workload. The most visible pattern is that High workload students (one colour) cluster at stress levels 4–5 regardless of how many sport hours they do — confirming that workload dominates stress and sport cannot offset it. Low and Medium workload students sit at lower stress levels across all sport hour values. The overall downward slope is very gentle, consistent with the weak and non-significant Pearson correlation below.')
+
+#pearson correlation
+r_sport, p_sport = stats.pearsonr(df['SportsHrs_num'], df['Stress_num'])
+st.subheader('Pearson Correlation - Sport Hours vs Stress')
+st.write('Pearson r:', round(r_sport, 4))
+st.write('p-value  :', round(p_sport, 4))
+if p_sport < 0.05:
+    st.write('Result: SIGNIFICANT (p < 0.05)')
+else:
+    st.write('Result: NOT significant (p >= 0.05)')
+st.write('Conclusion: There is a weak negative correlation between sport hours and stress.')
+st.write('More sport is linked to slightly lower stress, but the effect is not significant alone.')
+st.write('Workload remains the dominant driver. Sport helps but cannot overcome structural pressure.')
+st.info('Pearson Correlation Interpretation: The Pearson r of -0.1336 confirms a weak negative direction — more sport is associated with slightly lower stress. However, the p-value of 0.1328 is greater than 0.05, meaning this result is NOT statistically significant. We cannot reject the null hypothesis that the true correlation is zero. In plain terms: sport hours alone do not reliably predict stress in this sample. Sport may still be beneficial, but this dataset does not provide statistical proof. Any recommendation to invest in sport for stress reduction must be paired with workload management, which is the only statistically confirmed driver.')
+
+
+st.header('Gender vs Stress Analysis')
+st.write('Do female and male students experience different stress levels?')
+
+#bar chart - average stress by gender
+gender_stress = df.groupby('Gender')['Stress_num'].mean().reset_index()
+gender_stress.columns = ['Gender', 'Average Stress']
+fig_bar_gen = px.bar(gender_stress, x='Gender', y='Average Stress',
+                     color='Gender',
+                     title='Average Stress Level by Gender')
+st.plotly_chart(fig_bar_gen)
+st.info('Interpretation: The bar chart shows female students report a higher average stress level (3.74) compared to male students (3.13). While the bars may appear close in height, a difference of 0.61 stress points on a 5-point scale is meaningful — particularly when confirmed by a statistical test. This gap suggests a systemic difference in stress experience between genders rather than random variation.')
+
+#t-test
+group_Male   = df[df['Gender'] == 'Male']['Stress_num']
+group_Female = df[df['Gender'] == 'Female']['Stress_num']
+t_stat, p_value_ttest = stats.ttest_ind(group_Male, group_Female)
